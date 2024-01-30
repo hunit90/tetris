@@ -23,6 +23,7 @@ export default class GameBoard {
   }
 
   handleKeyUp(event) {
+    if (this.currentTetrisBlock === undefined || this.gameEnd) return
     if(event.keyCode === Phaser.Input.Keyboard.KeyCodes.J && this.canMoveBlock(-1, 0)) {
       this.currentTetrisBlock.move(-1,0)
     } else if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.L && this.canMoveBlock(1,0)) {
@@ -97,6 +98,7 @@ export default class GameBoard {
     const renderInfo = this.currentTetrisBlock.getRenderInfo()
     for (let y = renderInfo.startY, y2 = 0; y < renderInfo.endY; y++, y2++) {
       for (let x = renderInfo.startX, x2 = 0; x < renderInfo.endX; x++, x2++) {
+        if(y < 0 || x < 0) continue
         if (renderInfo.tiles[y2][x2] !== 0) {
           this.renderBoard[y][x] = renderInfo.tiles[y2][x2];
         }
@@ -116,6 +118,7 @@ export default class GameBoard {
         if (this.canSpawnBlock(block)) {
           this.currentTetrisBlock = block
         } else {
+          this.currentTetrisBlock = this.setLastBlockPos(block)
           this.gameEnd = true
           this.scene.cameras.main.shake(500)
         }
@@ -130,6 +133,15 @@ export default class GameBoard {
 
       }
     }
+  }
+
+  setLastBlockPos(block) {
+    let blockInfo = block.getRenderInfo()
+    while(checkBlockCollision(blockInfo, this.board)) {
+      block.move(0,-1)
+      blockInfo = block.getRenderInfo()
+    }
+    return block
   }
 
   canSpawnBlock(block) {
@@ -199,7 +211,7 @@ export default class GameBoard {
               .setScale(GameConfig.MainScene.RENDER_TILE_SIZE/GameConfig.MainScene.RENDTER_TILE_SPRITE_ORIGIN_SIZE)
               .setOrigin(0,0)
         } else {
-          this.scene.add.image(j * GameConfig.MainScene.RENDER_TILE_SIZE, i * GameConfig.MainScene.RENDER_TILE_SIZE, GameConfig.MainScene.RENDER_TILE_SPRITE_SHEET_KEY, this.board[i][j]-1)
+          this.scene.add.image(j * GameConfig.MainScene.RENDER_TILE_SIZE, i * GameConfig.MainScene.RENDER_TILE_SIZE, GameConfig.MainScene.RENDER_TILE_SPRITE_SHEET_KEY, this.renderBoard[i][j]-1)
               .setScale(GameConfig.MainScene.RENDER_TILE_SIZE/GameConfig.MainScene.RENDTER_TILE_SPRITE_ORIGIN_SIZE)
               .setOrigin(0,0)
         }

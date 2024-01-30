@@ -2,6 +2,7 @@ export const checkBlockCollision = (blockInfo, board) => {
     const {startX, startY, endX, endY, tiles} = blockInfo
     for(let y = startY, y2=0; y<endY;y++,y2++){
         for(let x = startX, x2 = 0; x<endX; x++, x2++){
+            if (y < 0 || x < 0) continue
             if(tiles[y2][x2] !== 0 && board[y][x] !== 0) return true
         }
     }
