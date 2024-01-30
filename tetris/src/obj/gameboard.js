@@ -11,6 +11,7 @@ export default class GameBoard {
     this.currentTetrisBlock = undefined;
     this.tetrisBlockFactory = new TetrisBlockFactory()
     this.timerManager = new TimerManager()
+    this.gameEnd = false
   }
 
   init() {
@@ -80,7 +81,7 @@ export default class GameBoard {
   spawnRandomBlock(x,y) {
     const block = this.tetrisBlockFactory.createRandomBlock()
     block.setPosition(x,y)
-    this.currentTetrisBlock = block
+    return block
   }
 
   _boardToRenderBoard() {
@@ -104,20 +105,38 @@ export default class GameBoard {
   }
 
   update(time, delta) {
-
+    if (this.gameEnd) return
     const {isClear, line} = this.checkForClearableLines()
     if (isClear) {
       this.clearLines(line)
       this.lineDown(line)
     } else {
-      if (this.timerManager.checkBlockDropTime()) {
-        if (this.canMoveBlock(0, 1)) {
-          this.currentTetrisBlock.move(0, 1)
+      if(this.currentTetrisBlock === undefined){
+        const block = this.spawnRandomBlock(GameConfig.MainScene.GAME_BOARD_WIDTH_CNT/2,0)
+        if (this.canSpawnBlock(block)) {
+          this.currentTetrisBlock = block
         } else {
-          this.placeBlock()
+          this.gameEnd = true
+          this.scene.cameras.main.shake(500)
         }
+      } else {
+        if (this.timerManager.checkBlockDropTime()) {
+          if (this.canMoveBlock(0, 1)) {
+            this.currentTetrisBlock.move(0, 1)
+          } else {
+            this.placeBlock()
+          }
+        }
+
       }
     }
+  }
+
+  canSpawnBlock(block) {
+    const blockInfo = block.getRenderInfo()
+    if(!checkBlockWithInArea(blockInfo, this.board)) return false
+    if(checkBlockCollision(blockInfo, this.board)) return false
+    return true
   }
 
   placeBlock() {
@@ -131,7 +150,7 @@ export default class GameBoard {
         }
       }
     }
-    this.spawnRandomBlock(GameConfig.MainScene.GAME_BOARD_WIDTH_CNT/2,0)
+    this.currentTetrisBlock = undefined
   }
 
   checkForClearableLines() {
